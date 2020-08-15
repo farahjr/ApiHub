@@ -8,7 +8,7 @@ namespace EInvest2.Interface
 {
     public interface IFundos
     {
-        Task<FundosModel> Get();
+        Task<FundosResponse> Get();
 
     }
 }

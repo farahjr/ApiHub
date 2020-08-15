@@ -5,7 +5,7 @@ namespace EInvest2.Interface
 {
     public interface IRendaFixa
     {
-        Task<RendaFixaModel> Get();
+        Task<RendaFixaResponse> Get();
 
     }
 }

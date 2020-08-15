@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace EInvest2.Models
 {
-    public partial class RendaFixaModel
+    public partial class RendaFixaResponse
     {
         public List<Lci> Lcis { get; set; }
     }

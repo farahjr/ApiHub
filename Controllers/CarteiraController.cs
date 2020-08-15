@@ -19,7 +19,7 @@ namespace EInvest2.Controllers
         }
 
         [HttpGet]
-        public async Task<TesouroDiretoModel> GetAsync()
+        public async Task<TesouroDiretoResponse> GetAsync()
         {
             _logger.LogInformation("Buscando Tesouro Direto");
             return await tesouroDiretoService.Get();

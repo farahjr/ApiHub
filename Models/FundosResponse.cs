@@ -4,13 +4,13 @@ using System.Collections.Generic;
 
 namespace EInvest2.Models
 {
-    public partial class TesouroDiretoModel
+    public partial class FundosResponse
     {
- 
-        public List<TesouroDireto> Tds { get; set; }
+        [JsonProperty("fundos")]
+        public List<Fundo> Fundos { get; set; }
     }
 
-    public partial class TesouroDireto
+    public partial class Fundo
     {
         public double ValorInvestido { get; set; }
         public double ValorTotal { get; set; }

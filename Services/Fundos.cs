@@ -14,7 +14,7 @@ namespace EInvest2.Service
         private const string BaseUrl = "http://www.mocky.io/v2/5e342ab33000008c00d96342";
         private readonly HttpClient _client = new HttpClient();
 
-        public async Task<FundosModel> Get()
+        public async Task<FundosResponse> Get()
         {
             var httpResponse = await _client.GetAsync($"{BaseUrl}");
 
@@ -24,7 +24,7 @@ namespace EInvest2.Service
             }
 
             var content = await httpResponse.Content.ReadAsStringAsync();
-            var todoItem = JsonConvert.DeserializeObject<FundosModel>(content);
+            var todoItem = JsonConvert.DeserializeObject<FundosResponse>(content);
 
             return todoItem;
         }

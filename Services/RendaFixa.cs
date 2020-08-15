@@ -14,7 +14,7 @@ namespace EInvest2.Service
         private const string BaseUrl = "http://www.mocky.io/v2/5e3429a33000008c00d96336";
         private readonly HttpClient _client = new HttpClient();
 
-        public async Task<RendaFixaModel> Get()
+        public async Task<RendaFixaResponse> Get()
         {
             var httpResponse = await _client.GetAsync($"{BaseUrl}");
 
@@ -24,7 +24,7 @@ namespace EInvest2.Service
             }
 
             var content = await httpResponse.Content.ReadAsStringAsync();
-            var todoItem = JsonConvert.DeserializeObject<RendaFixaModel>(content);
+            var todoItem = JsonConvert.DeserializeObject<RendaFixaResponse>(content);
 
             return todoItem;
         }

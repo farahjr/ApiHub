@@ -13,7 +13,7 @@ namespace EInvest2.Service
         private const string BaseUrl = "http://www.mocky.io/v2/5e3428203000006b00d9632a";
         private readonly HttpClient _client = new HttpClient();
 
-        public async Task<TesouroDiretoModel> Get()
+        public async Task<TesouroDiretoResponse> Get()
         {
             var httpResponse = await _client.GetAsync(BaseUrl);
 
@@ -23,7 +23,7 @@ namespace EInvest2.Service
             }
 
             var content = await httpResponse.Content.ReadAsStringAsync();
-            var todoItem = JsonConvert.DeserializeObject<TesouroDiretoModel>(content);
+            var todoItem = JsonConvert.DeserializeObject<TesouroDiretoResponse>(content);
 
             return todoItem;
         }

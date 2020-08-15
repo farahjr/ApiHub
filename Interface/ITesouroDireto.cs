@@ -8,7 +8,8 @@ namespace EInvest2.Service
 {
     public interface ITesouroDireto
     {
-        Task<TesouroDiretoModel> Get();
+        Task<TesouroDiretoResponse> Get();
+
     }
 }
 
