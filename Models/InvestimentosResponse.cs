@@ -19,8 +19,6 @@ namespace EInvest2.Models
     {
 
         public string Nome { get; set; }
-
-
         public double ValorInvestido { get; set; }
         public double ValorTotal { get; set; }
         public DateTimeOffset Vencimento { get; set; }
