@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using EInvest2.Models;
 using EInvest2.Service;
 using Microsoft.AspNetCore.Mvc;
@@ -21,39 +23,75 @@ namespace EInvest2.Controllers
         }
 
         [HttpGet]
-        public async Task<TesouroDiretoResponse> GetAsync()
+        public async Task<InvestimentosResponse> GetAsync()
         {
             var tesouro = new TesouroDiretoResponse();
             var rendaFixa = new RendaFixaResponse();
             var fundos = new FundosResponse();
-            var investimentos = new InvestimentosResponse();
+            var investimentos = new InvestimentosResponse(new List<Investimento>());
 
             tesouro = await _tesouroDiretoService.Get();
             rendaFixa = await _rendaFixaService.Get();
             fundos = await _fundosService.Get();
 
-            //foreach(TesouroDireto t in tesouro.Tds)
-            //{
-            //    investimentos.ValorTotal += t.ValorTotal;
-            //    investimentos.Investimentos.Add(new Investimento(t.Nome,t.ValorInvestido,t.ValorTotal, t.Vencimento, (t.ValorTotal - t.ValorInvestido) * 0,1));
-            //}
+            foreach (TesouroDireto t in tesouro.Tds)
+            {
+                investimentos.ValorTotal += t.ValorTotal;
+                double ir = t.ValorInvestido - t.ValorTotal < 0 ? 0 : (t.ValorTotal - t.ValorInvestido) * 0.1;
+                double resgate = t.ValorTotal;
 
-            //foreach (Lci r in rendaFixa.Lcis)
-            //{
-            //    investimentos.ValorTotal += r.ValorTotal;
-            //    investimentos.Investimentos.Add(new Investimento(r.Nome, r.CapitalInvestido, r., r.Vencimento, (r.ValorTotal - r.ValorInvestido) * 0, 1));
-            //}
+                if (t.Vencimento < DateTimeOffset.UtcNow.AddMonths(3))                
+                    resgate -= resgate * 0.06;                
+                else if (t.Vencimento - DateTimeOffset.UtcNow < (t.DataDeCompra - t.Vencimento) / 2)                
+                    resgate -= resgate * 0.15;                
+                else                
+                    resgate -= resgate * 0.3;
 
-            //foreach (Fundo f in fundos.Fundos)
-            //{
-            //    investimentos.ValorTotal += f.ValorTotal;
-            //    investimentos.Investimentos.Add(new Investimento(f.Nome, f.ValorInvestido, f.ValorTotal, f.Vencimento, (f.ValorTotal - f.ValorInvestido) * 0, 1));
-            //}
+                investimentos.Investimentos
+                    .Add(new Investimento(
+                        t.Nome, t.ValorInvestido, t.ValorTotal, t.Vencimento, ir, resgate));
+            }
+
+            foreach (Lci r in rendaFixa.Lcis)
+            {
+                investimentos.ValorTotal += r.CapitalAtual;
+                double ir = r.CapitalAtual - r.CapitalInvestido < 0 ? 0 : (r.CapitalAtual - r.CapitalInvestido) * 0.05;
+                double resgate = r.CapitalAtual;
+
+                if (r.Vencimento < DateTimeOffset.UtcNow.AddMonths(3))
+                    resgate -= resgate * 0.06;
+                else if (r.Vencimento - DateTimeOffset.UtcNow < (r.DataOperacao - r.Vencimento) / 2)
+                    resgate -= resgate * 0.15;
+                else
+                    resgate -= resgate * 0.3;
+
+                investimentos.Investimentos
+                    .Add(new Investimento(
+                        r.Nome, r.CapitalInvestido, r.CapitalAtual, r.Vencimento, ir, resgate));
+            }
+
+            foreach (Fundo f in fundos.Fundos)
+            {
+                investimentos.ValorTotal += f.ValorAtual;
+                double ir = f.ValorAtual - f.CapitalInvestido < 0 ? 0 : (f.ValorAtual - f.CapitalInvestido) * 0.15;
+                double resgate = f.ValorAtual;
+
+                if (f.DataResgate < DateTimeOffset.UtcNow.AddMonths(3))
+                    resgate -= resgate * 0.06;
+                else if (f.DataResgate - DateTimeOffset.UtcNow < (f.DataCompra - f.DataResgate) / 2)
+                    resgate -= resgate * 0.15;
+                else
+                    resgate -= resgate * 0.3;
+
+                investimentos.Investimentos
+                    .Add(new Investimento(
+                        f.Nome, f.CapitalInvestido, f.ValorAtual, f.DataResgate, ir, resgate));
+            }
 
 
 
             _logger.LogInformation("Buscando Tesouro Direto");
-            return tesouro;
+            return investimentos;
         }
     }
 }
