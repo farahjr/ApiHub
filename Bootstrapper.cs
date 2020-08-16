@@ -1,4 +1,5 @@
-﻿using EInvest2.Service;
+﻿using EInvest2.Interface;
+using EInvest2.Service;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EInvest2
@@ -9,8 +10,8 @@ namespace EInvest2
         {
             services.AddHttpClient<ITesouroDireto, TesouroDiretoService>();
             //services.AddHttpClient<ITesouroDireto, TesouroDiretoService>(client => client.BaseAddress = new Uri("http://www.mocky.io/v2/5e3428203000006b00d9632a"));
-            //services.AddHttpClient<IRendaFixa, RendaFixaService>();
-            //services.AddHttpClient<ITesouroDireto, TesouroDiretoService>();
+            services.AddHttpClient<IRendaFixa, RendaFixaService>();
+            services.AddHttpClient<IFundos, FundosService>();
         }
     }
 }

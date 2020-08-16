@@ -1,4 +1,5 @@
-﻿using EInvest2.Models;
+﻿using EInvest2.Interface;
+using EInvest2.Models;
 using EInvest2.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -20,96 +21,102 @@ namespace EInvest2.Controllers
         private const double taxaResgateMaiorQueMeioPeriodo = 0.06;
 
         private readonly ILogger<CarteiraController> _logger;
-        private readonly TesouroDiretoService _tesouroDiretoService = new TesouroDiretoService();
-        private RendaFixaService _rendaFixaService = new RendaFixaService();
-        private FundosService _fundosService = new FundosService();
+        private readonly ITesouroDireto _tesouroDiretoService;        
+        private readonly IRendaFixa _rendaFixaService;
+        private readonly IFundos _fundosService;
 
-        public CarteiraController(ILogger<CarteiraController> logger)
+        public CarteiraController(ILogger<CarteiraController> logger,
+                                  ITesouroDireto tesouroDiretoService,
+                                  IRendaFixa rendaFixaService,
+                                  IFundos fundosService)
         {
+            _tesouroDiretoService = tesouroDiretoService;
+            _rendaFixaService = rendaFixaService;
+            _fundosService = fundosService;
             _logger = logger;
         }
 
         [HttpGet]
         public async Task<InvestimentosResponse> GetAsync()
-        {
-            var investimentos = new InvestimentosResponse();
+        {            
             DateTimeOffset utcNow = DateTimeOffset.UtcNow;
-            TesouroDiretoResponse tesouro = await _tesouroDiretoService.Get();
-            RendaFixaResponse rendaFixa = await _rendaFixaService.Get();
-            FundosResponse fundos = await _fundosService.Get();
+            TesouroDiretoResponse tesouro = await _tesouroDiretoService.Get();            
+            RendaFixaResponse rendaFixa = await _rendaFixaService.Get();            
+            FundosResponse fundos = await _fundosService.Get();            
 
-            monstaInvestimentoResponse(investimentos, utcNow, tesouro, rendaFixa, fundos);
-            _logger.LogInformation("Buscando Tesouro Direto");
+            InvestimentosResponse investimentos = MontaInvestimentoResponse(utcNow, tesouro, rendaFixa, fundos);
+            
             return investimentos;
         }
 
-        private static void monstaInvestimentoResponse(InvestimentosResponse investimentos, DateTimeOffset utcNow, TesouroDiretoResponse tesouro, RendaFixaResponse rendaFixa, FundosResponse fundos)
+        private static InvestimentosResponse MontaInvestimentoResponse(DateTimeOffset utcNow, TesouroDiretoResponse tesouro, RendaFixaResponse rendaFixa, FundosResponse fundos)
         {
+            InvestimentosResponse response = new InvestimentosResponse();
             foreach (var investimento in tesouro.Tds)
             {
-                investimentos.ValorTotal += investimento.ValorTotal;
-                double ir = CalcularIr(investimento.ValorInvestido, investimento.ValorTotal, taxaInvestimentoTesouroDireto);
-                double resgate = investimento.ValorTotal;
-                resgate = CalcularResgateComDesconto(utcNow, investimento.DataDeCompra, investimento.Vencimento, resgate);
-                investimentos.Investimentos
-                    .Add(new Investimento()
-                    {
-                        Nome = investimento.Nome,
-                        ValorInvestido = investimento.ValorInvestido,
-                        ValorTotal = investimento.ValorTotal,
-                        Vencimento = investimento.Vencimento,
-                        Ir = ir,
-                        ValorResgate = resgate
-                    });
+                double taxa = VerificaTaxaPeriodo(utcNow, investimento.DataDeCompra, investimento.Vencimento);
+                double valorResgate = CalcularValorMenosTaxa(investimento.ValorTotal, taxa);
+                response.ValorTotal += investimento.ValorTotal;                
+                response.Investimentos.Add(new Investimento()
+                {
+                    Nome = investimento.Nome,
+                    ValorInvestido = investimento.ValorInvestido,
+                    ValorTotal = investimento.ValorTotal,
+                    Vencimento = investimento.Vencimento,
+                    Ir = CalcularIr(investimento.ValorInvestido, investimento.ValorTotal, taxaInvestimentoTesouroDireto),
+                    ValorResgate = valorResgate
+                });
             }
             foreach (var investimento in rendaFixa.Lcis)
             {
-                investimentos.ValorTotal += investimento.CapitalAtual;
-                double ir = CalcularIr(investimento.CapitalInvestido, investimento.CapitalAtual, taxaInvestimentoRendaFixa);
-                double resgate = investimento.CapitalAtual;
-                resgate = CalcularResgateComDesconto(utcNow, investimento.DataOperacao, investimento.Vencimento, resgate);
-                investimentos.Investimentos.Add(new Investimento()
+                double taxa = VerificaTaxaPeriodo(utcNow, investimento.DataOperacao, investimento.Vencimento);
+                double valorResgate = CalcularValorMenosTaxa(investimento.CapitalAtual, taxa);
+                response.ValorTotal += investimento.CapitalAtual;
+                response.Investimentos.Add(new Investimento()
                 {
                     Nome = investimento.Nome,
                     ValorInvestido = investimento.CapitalInvestido,
                     ValorTotal = investimento.CapitalAtual,
                     Vencimento = investimento.Vencimento,
-                    Ir = ir,
-                    ValorResgate = resgate
+                    Ir = CalcularIr(investimento.CapitalInvestido, investimento.CapitalAtual, taxaInvestimentoRendaFixa),
+                    ValorResgate = valorResgate
                 });
             }
             foreach (var investimento in fundos.Fundos)
             {
-                investimentos.ValorTotal += investimento.ValorAtual;
-                double ir = CalcularIr(investimento.CapitalInvestido, investimento.ValorAtual, taxaInvestimentoFundos);
-                double resgate = investimento.ValorAtual;
-                resgate = CalcularResgateComDesconto(utcNow, investimento.DataCompra, investimento.DataResgate, resgate);
-                investimentos.Investimentos.Add(new Investimento()
+                double taxa = VerificaTaxaPeriodo(utcNow, investimento.DataCompra, investimento.DataResgate);
+                double valorResgate = CalcularValorMenosTaxa((investimento.ValorAtual), taxa);
+                response.ValorTotal += investimento.ValorAtual;                
+                response.Investimentos.Add(new Investimento()
                 {
                     Nome = investimento.Nome,
                     ValorInvestido = investimento.CapitalInvestido,
                     ValorTotal = investimento.ValorAtual,
                     Vencimento = investimento.DataResgate,
-                    Ir = ir,
-                    ValorResgate = resgate
+                    Ir = CalcularIr(investimento.CapitalInvestido, investimento.ValorAtual, taxaInvestimentoFundos),
+                    ValorResgate = valorResgate
                 });
             }
+            return response;
         }
 
         private static double CalcularIr(double valorInvestido, double valorAtual, double taxaInvestimento)
         {
-            return valorAtual - valorInvestido < 0 ? 0 : (valorAtual - valorInvestido) * taxaInvestimento;
+            return InvestimentoDiferencaPositiva(valorInvestido, valorAtual) ? CalcularValorMenosTaxa(valorAtual - valorInvestido, taxaInvestimento) : 0;
         }
 
-        private static double CalcularResgateComDesconto(DateTimeOffset utcNow, DateTimeOffset dataCompra, DateTimeOffset dataVencimento, double resgate)
+        private static bool InvestimentoDiferencaPositiva(double valorInvestido, double valorAtual) => valorAtual - valorInvestido > 0;
+
+        private static double CalcularValorMenosTaxa(double valor, double taxa) => valor -= valor * taxa;
+
+        private static double VerificaTaxaPeriodo(DateTimeOffset utcNow, DateTimeOffset dataCompra, DateTimeOffset dataVencimento)
         {
             if (dataCompra < utcNow.AddMonths(3))
-                resgate -= resgate * taxaResgateMaiorQueMeioPeriodo;
+                return taxaResgateMaiorQueMeioPeriodo;
             else if (dataVencimento - utcNow < (dataCompra - dataVencimento) / 2)
-                resgate -= resgate * taxaResgateAteTresMeses;
+                return taxaResgateAteTresMeses;
             else
-                resgate -= resgate * taxaResgateOutros;
-            return resgate;
+                return taxaResgateOutros;            
         }
     }
 }

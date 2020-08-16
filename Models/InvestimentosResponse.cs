@@ -34,27 +34,4 @@ namespace EInvest2.Models
         public double Ir { get; set; }
         public double ValorResgate { get; set; }
     }
-
-    //public partial class InvestimentosResponse
-    //{
-    //    public static InvestimentosResponse FromJson(string json) => JsonConvert.DeserializeObject<InvestimentosResponse>(json, EInvest2.Service.Converter.Settings);
-    //}
-
-    //public static class Serialize
-    //{
-    //    public static string ToJson(this InvestimentosResponse self) => JsonConvert.SerializeObject(self, EInvest2.Service.Converter.Settings);
-    //}
-
-    //internal static class Converter
-    //{
-    //    public static readonly JsonSerializerSettings Settings = new JsonSerializerSettings
-    //    {
-    //        MetadataPropertyHandling = MetadataPropertyHandling.Ignore,
-    //        DateParseHandling = DateParseHandling.None,
-    //        Converters =
-    //        {
-    //            new IsoDateTimeConverter { DateTimeStyles = DateTimeStyles.AssumeUniversal }
-    //        },
-    //    };
-    //}
 }
