@@ -1,12 +1,11 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace EInvest2.Models
 {
     public partial class TesouroDiretoResponse
     {
- 
+
         public List<TesouroDireto> Tds { get; set; }
     }
 

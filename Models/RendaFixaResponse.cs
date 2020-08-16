@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace EInvest2.Models
@@ -19,11 +18,11 @@ namespace EInvest2.Models
         public long OutrasTaxas { get; set; }
         public long Taxas { get; set; }
         public string Indice { get; set; }
-        public string Tipo { get; set; } 
-        public string Nome { get; set; }        
-        public bool GuarantidoFgc { get; set; }        
-        public DateTimeOffset DataOperacao { get; set; }        
-        public double PrecoUnitario { get; set; }        
+        public string Tipo { get; set; }
+        public string Nome { get; set; }
+        public bool GuarantidoFgc { get; set; }
+        public DateTimeOffset DataOperacao { get; set; }
+        public double PrecoUnitario { get; set; }
         public bool Primario { get; set; }
     }
 
