@@ -63,30 +63,36 @@ namespace EInvest2.Controllers
             TesouroDiretoResponse tesouro = await _tesouroDiretoService.Get();
             RendaFixaResponse rendaFixa = await _rendaFixaService.Get();
             FundosResponse fundos = await _fundosService.Get();
+            InvestimentosResponse investimentos = new InvestimentosResponse();
 
-            InvestimentosResponse investimentos = MontaInvestimentoResponse(dataConsulta, tesouro, rendaFixa, fundos);
+            PopulaTsouro(dataConsulta, tesouro, investimentos);
+            PopulaRendaFixa(dataConsulta, rendaFixa, investimentos);
+            PopulaFundos(dataConsulta, fundos, investimentos);            
 
             return investimentos;
         }
 
-        private static InvestimentosResponse MontaInvestimentoResponse(DateTime dataConsulta, TesouroDiretoResponse tesouro, RendaFixaResponse rendaFixa, FundosResponse fundos)
+        private static void PopulaFundos(DateTime dataConsulta, FundosResponse fundos, InvestimentosResponse response)
         {
-            InvestimentosResponse response = new InvestimentosResponse();
-            foreach (var investimento in tesouro.Tds)
+            foreach (var investimento in fundos.Fundos)
             {
-                decimal taxa = VerificaTaxaPeriodo(dataConsulta, investimento.DataDeCompra, investimento.Vencimento);
-                decimal valorResgate = CalcularValorMenosTaxa(investimento.ValorTotal, taxa);
-                response.ValorTotal += investimento.ValorTotal;                
+                decimal taxa = VerificaTaxaPeriodo(dataConsulta, investimento.DataCompra, investimento.DataResgate);
+                decimal valorResgate = CalcularValorMenosTaxa((investimento.ValorAtual), taxa);
+                response.ValorTotal += investimento.ValorAtual;
                 response.Investimentos.Add(new Investimento()
                 {
                     Nome = investimento.Nome,
-                    ValorInvestido = investimento.ValorInvestido,
-                    ValorTotal = investimento.ValorTotal,
-                    Vencimento = investimento.Vencimento,
-                    Ir = CalcularIr(investimento.ValorInvestido, investimento.ValorTotal, taxaInvestimentoTesouroDireto),
+                    ValorInvestido = investimento.CapitalInvestido,
+                    ValorTotal = investimento.ValorAtual,
+                    Vencimento = investimento.DataResgate,
+                    Ir = CalcularIr(investimento.CapitalInvestido, investimento.ValorAtual, taxaInvestimentoFundos),
                     ValorResgate = valorResgate
                 });
             }
+        }
+
+        private static void PopulaRendaFixa(DateTime dataConsulta, RendaFixaResponse rendaFixa, InvestimentosResponse response)
+        {
             foreach (var investimento in rendaFixa.Lcis)
             {
                 decimal taxa = VerificaTaxaPeriodo(dataConsulta, investimento.DataOperacao, investimento.Vencimento);
@@ -102,38 +108,41 @@ namespace EInvest2.Controllers
                     ValorResgate = valorResgate
                 });
             }
-            foreach (var investimento in fundos.Fundos)
+        }
+
+        private static void PopulaTsouro(DateTime dataConsulta, TesouroDiretoResponse tesouro, InvestimentosResponse response)
+        {
+            foreach (var investimento in tesouro.Tds)
             {
-                decimal taxa = VerificaTaxaPeriodo(dataConsulta, investimento.DataCompra, investimento.DataResgate);
-                decimal valorResgate = CalcularValorMenosTaxa((investimento.ValorAtual), taxa);
-                response.ValorTotal += investimento.ValorAtual;                
+                decimal taxa = VerificaTaxaPeriodo(dataConsulta, investimento.DataDeCompra, investimento.Vencimento);
+                decimal valorResgate = CalcularValorMenosTaxa(investimento.ValorTotal, taxa);
+                response.ValorTotal += investimento.ValorTotal;
                 response.Investimentos.Add(new Investimento()
                 {
                     Nome = investimento.Nome,
-                    ValorInvestido = investimento.CapitalInvestido,
-                    ValorTotal = investimento.ValorAtual,
-                    Vencimento = investimento.DataResgate,
-                    Ir = CalcularIr(investimento.CapitalInvestido, investimento.ValorAtual, taxaInvestimentoFundos),
+                    ValorInvestido = investimento.ValorInvestido,
+                    ValorTotal = investimento.ValorTotal,
+                    Vencimento = investimento.Vencimento,
+                    Ir = CalcularIr(investimento.ValorInvestido, investimento.ValorTotal, taxaInvestimentoTesouroDireto),
                     ValorResgate = valorResgate
                 });
             }
-            return response;
         }
 
-        private static decimal CalcularIr(decimal valorInvestido, decimal valorAtual, decimal taxaInvestimento)
+        public static decimal CalcularIr(decimal valorInvestido, decimal valorAtual, decimal taxaInvestimento)
         {
             return InvestimentoDiferencaPositiva(valorInvestido, valorAtual) ? CalcularValorMenosTaxa(valorAtual - valorInvestido, taxaInvestimento) : 0;
         }
 
-        private static bool InvestimentoDiferencaPositiva(decimal valorInvestido, decimal valorAtual) => valorAtual - valorInvestido > 0;
+        public static bool InvestimentoDiferencaPositiva(decimal valorInvestido, decimal valorAtual) => valorAtual - valorInvestido > 0;
 
-        private static decimal CalcularValorMenosTaxa(decimal valor, decimal taxa) => valor -= valor * taxa;
+        public static decimal CalcularValorMenosTaxa(decimal valor, decimal taxa) => valor -= valor * taxa;
 
-        private static decimal VerificaTaxaPeriodo(DateTime dataConsulta, DateTime dataCompra, DateTime dataVencimento)
+        public static decimal VerificaTaxaPeriodo(DateTime dataConsulta, DateTime dataCompra, DateTime dataVencimento)
         {
-            if (dataCompra < dataConsulta.AddMonths(3))
+            if ((dataVencimento - dataConsulta < (dataVencimento - dataCompra) / 2) && dataVencimento.AddMonths(-3) > dataConsulta)
                 return taxaResgateMaiorQueMeioPeriodo;
-            else if (dataVencimento - dataConsulta < (dataCompra - dataVencimento) / 2)
+            else if (dataVencimento < dataConsulta.AddMonths(3))
                 return taxaResgateAteTresMeses;
             else
                 return taxaResgateOutros;            
