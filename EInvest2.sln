@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30204.135
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EInvest2", "Src\EInvest2.csproj", "{DA2FE9DA-F3B2-4E04-A640-A4031457BEF7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{49A86BF6-07AC-4577-A59E-0DF795F7741C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Src", "Src", "{C76BE416-82AA-4396-A055-B34436AB4DF1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnityTests", "Tests\UnityTests\UnityTests.csproj", "{0BCADDD4-2FD7-4CBC-8FE4-FBB10D38EA2B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DA2FE9DA-F3B2-4E04-A640-A4031457BEF7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA2FE9DA-F3B2-4E04-A640-A4031457BEF7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA2FE9DA-F3B2-4E04-A640-A4031457BEF7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA2FE9DA-F3B2-4E04-A640-A4031457BEF7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0BCADDD4-2FD7-4CBC-8FE4-FBB10D38EA2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0BCADDD4-2FD7-4CBC-8FE4-FBB10D38EA2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0BCADDD4-2FD7-4CBC-8FE4-FBB10D38EA2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0BCADDD4-2FD7-4CBC-8FE4-FBB10D38EA2B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{DA2FE9DA-F3B2-4E04-A640-A4031457BEF7} = {C76BE416-82AA-4396-A055-B34436AB4DF1}
+		{0BCADDD4-2FD7-4CBC-8FE4-FBB10D38EA2B} = {49A86BF6-07AC-4577-A59E-0DF795F7741C}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {19F8E283-40EF-4E78-8942-F5580E2482BC}
+	EndGlobalSection
+EndGlobal
