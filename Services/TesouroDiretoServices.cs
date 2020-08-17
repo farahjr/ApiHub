@@ -23,17 +23,15 @@ namespace EInvest2.Service
         public async Task<TesouroDiretoResponse> Get()
         {
             _logger.LogInformation("Buscando Tesouro Direto");
+            var httpResponse = await _client.GetAsync(_client.BaseAddress);
 
-            var httpResponse = await _client.GetAsync(BaseUrl);
-
-            if (!httpResponse.IsSuccessStatusCode)
-            {
+            if (!httpResponse.IsSuccessStatusCode)            
                 throw new Exception("Problema ao consultar Tesouro Direto");
-            }
-            var content = await httpResponse.Content.ReadAsStringAsync();
-            var todoItem = JsonConvert.DeserializeObject<TesouroDiretoResponse>(content);
+            
+            var response = await httpResponse.Content.ReadAsStringAsync();
+            var tesouroDireto = JsonConvert.DeserializeObject<TesouroDiretoResponse>(response);
             _logger.LogInformation("Retornou Tesouro Direto");
-            return todoItem;
+            return tesouroDireto;
         }
     }
 }

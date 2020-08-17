@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30204.135
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EInvest2", "EInvest2.csproj", "{488074C7-537D-4B7B-BC52-91BFCCA96253}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EInvest2", "EInvest2.csproj", "{488074C7-537D-4B7B-BC52-91BFCCA96253}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source", "Source", "{FD5BE394-BBC3-449F-AD02-1D02C117B67A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,6 +20,9 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{488074C7-537D-4B7B-BC52-91BFCCA96253} = {FD5BE394-BBC3-449F-AD02-1D02C117B67A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {19F8E283-40EF-4E78-8942-F5580E2482BC}

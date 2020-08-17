@@ -10,8 +10,7 @@ namespace EInvest2.Service
 {
     public class RendaFixaService : IRendaFixa
     {
-        private readonly ILogger<RendaFixaService> _logger;
-        private const string BaseUrl = "http://www.mocky.io/v2/5e3429a33000008c00d96336";
+        private readonly ILogger<RendaFixaService> _logger;        
         private readonly HttpClient _client = new HttpClient();
 
         public RendaFixaService(HttpClient http, ILogger<RendaFixaService> logger)
@@ -19,21 +18,18 @@ namespace EInvest2.Service
             _logger = logger;
             _client = http;
         }
-
         public async Task<RendaFixaResponse> Get()
         {
             _logger.LogInformation("Buscando RendaFixa");
-            var httpResponse = await _client.GetAsync($"{BaseUrl}");
+            var httpResponse = await _client.GetAsync(_client.BaseAddress);
 
-            if (!httpResponse.IsSuccessStatusCode)
-            {
-                throw new Exception("Problema ao consultar RendaFixa");
-            }
+            if (!httpResponse.IsSuccessStatusCode)            
+                throw new Exception("Problema ao consultar RendaFixa");            
 
-            var content = await httpResponse.Content.ReadAsStringAsync();
-            var todoItem = JsonConvert.DeserializeObject<RendaFixaResponse>(content);
+            var response = await httpResponse.Content.ReadAsStringAsync();
+            var rendaFixa = JsonConvert.DeserializeObject<RendaFixaResponse>(response);
             _logger.LogInformation("Retornou RendaFixa");
-            return todoItem;
+            return rendaFixa;
         }
     }
 }

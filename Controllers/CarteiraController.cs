@@ -4,6 +4,7 @@ using EInvest2.Service;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
 
@@ -68,12 +69,12 @@ namespace EInvest2.Controllers
             return investimentos;
         }
 
-        private static InvestimentosResponse MontaInvestimentoResponse(DateTime utcNow, TesouroDiretoResponse tesouro, RendaFixaResponse rendaFixa, FundosResponse fundos)
+        private static InvestimentosResponse MontaInvestimentoResponse(DateTime dataConsulta, TesouroDiretoResponse tesouro, RendaFixaResponse rendaFixa, FundosResponse fundos)
         {
             InvestimentosResponse response = new InvestimentosResponse();
             foreach (var investimento in tesouro.Tds)
             {
-                decimal taxa = VerificaTaxaPeriodo(utcNow, investimento.DataDeCompra, investimento.Vencimento);
+                decimal taxa = VerificaTaxaPeriodo(dataConsulta, investimento.DataDeCompra, investimento.Vencimento);
                 decimal valorResgate = CalcularValorMenosTaxa(investimento.ValorTotal, taxa);
                 response.ValorTotal += investimento.ValorTotal;                
                 response.Investimentos.Add(new Investimento()
@@ -88,7 +89,7 @@ namespace EInvest2.Controllers
             }
             foreach (var investimento in rendaFixa.Lcis)
             {
-                decimal taxa = VerificaTaxaPeriodo(utcNow, investimento.DataOperacao, investimento.Vencimento);
+                decimal taxa = VerificaTaxaPeriodo(dataConsulta, investimento.DataOperacao, investimento.Vencimento);
                 decimal valorResgate = CalcularValorMenosTaxa(investimento.CapitalAtual, taxa);
                 response.ValorTotal += investimento.CapitalAtual;
                 response.Investimentos.Add(new Investimento()
@@ -103,7 +104,7 @@ namespace EInvest2.Controllers
             }
             foreach (var investimento in fundos.Fundos)
             {
-                decimal taxa = VerificaTaxaPeriodo(utcNow, investimento.DataCompra, investimento.DataResgate);
+                decimal taxa = VerificaTaxaPeriodo(dataConsulta, investimento.DataCompra, investimento.DataResgate);
                 decimal valorResgate = CalcularValorMenosTaxa((investimento.ValorAtual), taxa);
                 response.ValorTotal += investimento.ValorAtual;                
                 response.Investimentos.Add(new Investimento()
@@ -128,11 +129,11 @@ namespace EInvest2.Controllers
 
         private static decimal CalcularValorMenosTaxa(decimal valor, decimal taxa) => valor -= valor * taxa;
 
-        private static decimal VerificaTaxaPeriodo(DateTime utcNow, DateTime dataCompra, DateTime dataVencimento)
+        private static decimal VerificaTaxaPeriodo(DateTime dataConsulta, DateTime dataCompra, DateTime dataVencimento)
         {
-            if (dataCompra < utcNow.AddMonths(3))
+            if (dataCompra < dataConsulta.AddMonths(3))
                 return taxaResgateMaiorQueMeioPeriodo;
-            else if (dataVencimento - utcNow < (dataCompra - dataVencimento) / 2)
+            else if (dataVencimento - dataConsulta < (dataCompra - dataVencimento) / 2)
                 return taxaResgateAteTresMeses;
             else
                 return taxaResgateOutros;            
