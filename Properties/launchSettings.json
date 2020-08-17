@@ -20,7 +20,7 @@
     "EInvest2": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "weatherforecast",
+      "launchUrl": "carteira",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },

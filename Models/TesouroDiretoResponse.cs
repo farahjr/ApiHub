@@ -11,11 +11,11 @@ namespace EInvest2.Models
 
     public partial class TesouroDireto
     {
-        public double ValorInvestido { get; set; }
-        public double ValorTotal { get; set; }
-        public DateTimeOffset Vencimento { get; set; }
-        public DateTimeOffset DataDeCompra { get; set; }
-        public long Iof { get; set; }
+        public decimal ValorInvestido { get; set; }
+        public decimal ValorTotal { get; set; }
+        public DateTime Vencimento { get; set; }
+        public DateTime DataDeCompra { get; set; }
+        public decimal Iof { get; set; }
         public string Indice { get; set; }
         public string Tipo { get; set; }
         public string Nome { get; set; }

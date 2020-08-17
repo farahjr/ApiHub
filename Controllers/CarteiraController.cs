@@ -2,6 +2,7 @@
 using EInvest2.Models;
 using EInvest2.Service;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Threading.Tasks;
@@ -12,15 +13,16 @@ namespace EInvest2.Controllers
     [Route("[controller]")]
     public class CarteiraController : ControllerBase
     {
-        private const double taxaInvestimentoTesouroDireto = 0.1;
-        private const double taxaInvestimentoRendaFixa = 0.05;
-        private const double taxaInvestimentoFundos = 0.15;
+        private const decimal taxaInvestimentoTesouroDireto = 0.1M;
+        private const decimal taxaInvestimentoRendaFixa = 0.05M;
+        private const decimal taxaInvestimentoFundos = 0.15M;
 
-        private const double taxaResgateOutros = 0.3;
-        private const double taxaResgateAteTresMeses = 0.15;
-        private const double taxaResgateMaiorQueMeioPeriodo = 0.06;
+        private const decimal taxaResgateOutros = 0.3M;
+        private const decimal taxaResgateAteTresMeses = 0.15M;
+        private const decimal taxaResgateMaiorQueMeioPeriodo = 0.06M;
 
         private readonly ILogger<CarteiraController> _logger;
+        private readonly IMemoryCache _cache;
         private readonly ITesouroDireto _tesouroDiretoService;        
         private readonly IRendaFixa _rendaFixaService;
         private readonly IFundos _fundosService;
@@ -28,34 +30,51 @@ namespace EInvest2.Controllers
         public CarteiraController(ILogger<CarteiraController> logger,
                                   ITesouroDireto tesouroDiretoService,
                                   IRendaFixa rendaFixaService,
-                                  IFundos fundosService)
+                                  IFundos fundosService,
+                                  IMemoryCache cache
+                                  )
         {
             _tesouroDiretoService = tesouroDiretoService;
             _rendaFixaService = rendaFixaService;
             _fundosService = fundosService;
             _logger = logger;
+            _cache = cache;
         }
 
         [HttpGet]
-        public async Task<InvestimentosResponse> GetAsync()
-        {            
-            DateTimeOffset utcNow = DateTimeOffset.UtcNow;
-            TesouroDiretoResponse tesouro = await _tesouroDiretoService.Get();            
-            RendaFixaResponse rendaFixa = await _rendaFixaService.Get();            
-            FundosResponse fundos = await _fundosService.Get();            
+        public Task<InvestimentosResponse> Get()
+        {
+            DateTime dataExpiracao = DateTime.Today.AddDays(1);
+            if (!_cache.TryGetValue("InvestimentosResponse", out Task<InvestimentosResponse> investimentosResponse))
+            {
+                if (investimentosResponse == null)
+                {
+                    investimentosResponse = Investimentos();
+                }
+                _cache.Set("InvestimentosResponse", investimentosResponse, dataExpiracao);
+            }
+            return investimentosResponse;
+        }
 
-            InvestimentosResponse investimentos = MontaInvestimentoResponse(utcNow, tesouro, rendaFixa, fundos);
-            
+        private async Task<InvestimentosResponse> Investimentos()
+        {
+            DateTime dataConsulta = DateTime.Now;
+            TesouroDiretoResponse tesouro = await _tesouroDiretoService.Get();
+            RendaFixaResponse rendaFixa = await _rendaFixaService.Get();
+            FundosResponse fundos = await _fundosService.Get();
+
+            InvestimentosResponse investimentos = MontaInvestimentoResponse(dataConsulta, tesouro, rendaFixa, fundos);
+
             return investimentos;
         }
 
-        private static InvestimentosResponse MontaInvestimentoResponse(DateTimeOffset utcNow, TesouroDiretoResponse tesouro, RendaFixaResponse rendaFixa, FundosResponse fundos)
+        private static InvestimentosResponse MontaInvestimentoResponse(DateTime utcNow, TesouroDiretoResponse tesouro, RendaFixaResponse rendaFixa, FundosResponse fundos)
         {
             InvestimentosResponse response = new InvestimentosResponse();
             foreach (var investimento in tesouro.Tds)
             {
-                double taxa = VerificaTaxaPeriodo(utcNow, investimento.DataDeCompra, investimento.Vencimento);
-                double valorResgate = CalcularValorMenosTaxa(investimento.ValorTotal, taxa);
+                decimal taxa = VerificaTaxaPeriodo(utcNow, investimento.DataDeCompra, investimento.Vencimento);
+                decimal valorResgate = CalcularValorMenosTaxa(investimento.ValorTotal, taxa);
                 response.ValorTotal += investimento.ValorTotal;                
                 response.Investimentos.Add(new Investimento()
                 {
@@ -69,8 +88,8 @@ namespace EInvest2.Controllers
             }
             foreach (var investimento in rendaFixa.Lcis)
             {
-                double taxa = VerificaTaxaPeriodo(utcNow, investimento.DataOperacao, investimento.Vencimento);
-                double valorResgate = CalcularValorMenosTaxa(investimento.CapitalAtual, taxa);
+                decimal taxa = VerificaTaxaPeriodo(utcNow, investimento.DataOperacao, investimento.Vencimento);
+                decimal valorResgate = CalcularValorMenosTaxa(investimento.CapitalAtual, taxa);
                 response.ValorTotal += investimento.CapitalAtual;
                 response.Investimentos.Add(new Investimento()
                 {
@@ -84,8 +103,8 @@ namespace EInvest2.Controllers
             }
             foreach (var investimento in fundos.Fundos)
             {
-                double taxa = VerificaTaxaPeriodo(utcNow, investimento.DataCompra, investimento.DataResgate);
-                double valorResgate = CalcularValorMenosTaxa((investimento.ValorAtual), taxa);
+                decimal taxa = VerificaTaxaPeriodo(utcNow, investimento.DataCompra, investimento.DataResgate);
+                decimal valorResgate = CalcularValorMenosTaxa((investimento.ValorAtual), taxa);
                 response.ValorTotal += investimento.ValorAtual;                
                 response.Investimentos.Add(new Investimento()
                 {
@@ -100,16 +119,16 @@ namespace EInvest2.Controllers
             return response;
         }
 
-        private static double CalcularIr(double valorInvestido, double valorAtual, double taxaInvestimento)
+        private static decimal CalcularIr(decimal valorInvestido, decimal valorAtual, decimal taxaInvestimento)
         {
             return InvestimentoDiferencaPositiva(valorInvestido, valorAtual) ? CalcularValorMenosTaxa(valorAtual - valorInvestido, taxaInvestimento) : 0;
         }
 
-        private static bool InvestimentoDiferencaPositiva(double valorInvestido, double valorAtual) => valorAtual - valorInvestido > 0;
+        private static bool InvestimentoDiferencaPositiva(decimal valorInvestido, decimal valorAtual) => valorAtual - valorInvestido > 0;
 
-        private static double CalcularValorMenosTaxa(double valor, double taxa) => valor -= valor * taxa;
+        private static decimal CalcularValorMenosTaxa(decimal valor, decimal taxa) => valor -= valor * taxa;
 
-        private static double VerificaTaxaPeriodo(DateTimeOffset utcNow, DateTimeOffset dataCompra, DateTimeOffset dataVencimento)
+        private static decimal VerificaTaxaPeriodo(DateTime utcNow, DateTime dataCompra, DateTime dataVencimento)
         {
             if (dataCompra < utcNow.AddMonths(3))
                 return taxaResgateMaiorQueMeioPeriodo;
